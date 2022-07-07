@@ -21,20 +21,24 @@ final class PlaybackPresenter {
     private var track: AudioTrack?
     private var tracks = [AudioTrack]()
     
+    var index = 0
+    
     var currentTrack: AudioTrack? {
         if let track = track, tracks.isEmpty {
             return track
         } else if let player = self.playerQueue, !tracks.isEmpty {
-            let item = player.currentItem
-            let items = player.items()
-            guard let index = items.firstIndex(where: { $0 == item }) else {
-                return nil
-            }
+//            let item = player.currentItem
+//            let items = player.items()
+//            guard let index = items.firstIndex(where: { $0 == item }) else {
+//                return nil
+//            }
             return tracks[index]
         }
         
         return nil
     }
+    
+    var playerVC: PlayerViewController?
     
     var player: AVPlayer?
     var playerQueue: AVQueuePlayer?
@@ -58,6 +62,7 @@ final class PlaybackPresenter {
         viewController.present(UINavigationController(rootViewController: vc), animated: true) { [weak self] in
             self?.player?.play()
         }
+        self.playerVC = vc
     }
     
     func startPlayback(
@@ -80,6 +85,7 @@ final class PlaybackPresenter {
         vc.dataSource = self
         vc.delegate = self
         viewController.present(UINavigationController(rootViewController: vc), animated: true, completion: nil)
+        self.playerVC = vc
     }
 }
 
@@ -104,12 +110,10 @@ extension PlaybackPresenter: PlayerViewControllerDelegate {
         if tracks.isEmpty {
             // not playlist or album
             player?.pause()
-        } else if let firstItem = playerQueue?.items().first {
-            playerQueue?.pause()
-            playerQueue?.removeAllItems()
-            playerQueue = AVQueuePlayer(items: [firstItem])
-            playerQueue?.play()
-            playerQueue?.volume = 0.5
+        } else if let player = playerQueue {
+            playerQueue?.advanceToNextItem()
+            index += 1
+            playerVC?.refreshUI()
         }
     }
     
@@ -118,8 +122,12 @@ extension PlaybackPresenter: PlayerViewControllerDelegate {
             // not playlist or album
             player?.pause()
             player?.play()
-        } else if let player = playerQueue {
-            playerQueue?.advanceToNextItem()
+        } else if let firstItem = playerQueue?.items().first {
+            playerQueue?.pause()
+            playerQueue?.removeAllItems()
+            playerQueue = AVQueuePlayer(items: [firstItem])
+            playerQueue?.play()
+            playerQueue?.volume = 0.5
         }
     }
     
