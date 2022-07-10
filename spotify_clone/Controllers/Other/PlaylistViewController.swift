@@ -149,6 +149,7 @@ class PlaylistViewController: UIViewController {
                                 strongSelf.viewModels.remove(at: indexPath.row)
                                 strongSelf.collectionView.reloadData()
                             } else {
+                                print("Failed to remove \(trackToDelete.name) from \(strongSelf.playlist.name)")
                             }
                         }
                     }
